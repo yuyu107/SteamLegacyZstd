@@ -1,0 +1,3 @@
+LIBRARY steam_zstd
+EXPORTS
+    SteamVSZaDecompress
