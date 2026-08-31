@@ -18,6 +18,16 @@
 
 从 Release 下载并解压全部文件，完全退出 Steam 后运行 `OldSteam_VSZa_Launcher.exe`。不要直接用原 `steam.exe` 启动需要此兼容功能的下载或更新。
 
+### Steam 安装目录如何识别
+
+启动器不扫描磁盘、不读取 Steam 账号、密码或游戏文件。它只读取 Steam 在当前用户注册表中保存的安装目录：
+
+```text
+HKEY_CURRENT_USER\Software\Valve\Steam\SteamPath
+```
+
+随后使用该路径启动其中的 `steam.exe`。如果此注册表项不存在或路径无效，启动器会显示“找不到 Steam 安装目录”的提示。
+
 ## 构建
 
 需要 Zig 0.16 或兼容版本，以及 GNU binutils（`as`、`ld`、`objcopy`）。另需将 Zstandard 的合并源码 `zstd.c`、`zstd.h`、`zstd_errors.h` 放到 `third_party/zstd`；此依赖未直接纳入仓库，来源和许可证见该目录说明。
