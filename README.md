@@ -1,14 +1,18 @@
 # Steam VSZa compatibility patch
 
-为 Windows 8.1 上的指定旧版 32 位 Steam 客户端添加 SteamPipe `VSZa`（Zstandard）数据块解压支持。
+为 Windows 7 / 8.1 上的指定旧版 32 位 Steam 客户端添加 SteamPipe `VSZa`（Zstandard）数据块解压支持。
 
 ## 已验证范围
 
 - Steam `steamclient.dll`：2024-11-08 构建，SHA-256：`d0e83c515f17ca57090c8c73664e5d61e37eae718dfa3a5cbb1e4b909548fc34`
-- 系统：Windows 8.1 x86/x64
-- 已验证游戏：Terraria（AppID 105600）
+- 系统：Windows 7、Windows 8.1；32 位与 64 位系统均已适配
+- 已验证内容：Terraria（AppID 105600）游戏下载与创意工坊内容下载
 
 它不会替换或修改硬盘上的 `steamclient.dll`、`steamui.dll` 或 `steam.exe`。启动器只在本次 Steam 进程的内存中加入分支；退出 Steam 后该变化自动消失。
+
+## 重要限制
+
+本项目只解决旧 Steam 无法解压新压缩格式内容的问题，**不让旧系统或旧版 Steam 获得运行所有游戏的能力**。部分游戏仍可能因为仅提供 64 位程序、要求 Windows 10/11、依赖新版 Web 组件、图形 API 或其他运行库而无法启动；这些限制与本补丁无关。
 
 ## 使用
 
