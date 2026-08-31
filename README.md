@@ -1,6 +1,8 @@
 # Steam VSZa compatibility patch
 
-为 Windows 7 / 8.1 上的**指定旧版 Steam 客户端程序**添加 SteamPipe `VSZa`（Zstandard）数据块解压支持。目标 Steam 程序本体为 32 位，但 64 位 Windows 上安装该指定旧版 Steam 也可以使用。
+为 Windows 7 / 8.1 上的指定旧版 Steam 客户端程序添加 SteamPipe `VSZa`（Zstandard）数据块解压支持。该目标版本是 Steam 结束对 Windows 7 / 8.x 支持前，按常规更新渠道通常会保留或安装到的最后一代兼容客户端；并非任意选择的历史版本。
+
+目标 Steam 程序本体为 32 位，但 64 位 Windows 上安装该指定旧版 Steam 也可以使用。
 
 ## 已验证范围
 
