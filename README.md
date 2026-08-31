@@ -1,12 +1,15 @@
 # Steam VSZa compatibility patch
 
-为 Windows 7 / 8.1 上的指定旧版 32 位 Steam 客户端添加 SteamPipe `VSZa`（Zstandard）数据块解压支持。
+为 Windows 7 / 8.1 上的**指定旧版 Steam 客户端程序**添加 SteamPipe `VSZa`（Zstandard）数据块解压支持。目标 Steam 程序本体为 32 位，但 64 位 Windows 上安装该指定旧版 Steam 也可以使用。
 
 ## 已验证范围
 
-- Steam `steamclient.dll`：2024-11-08 构建，SHA-256：`d0e83c515f17ca57090c8c73664e5d61e37eae718dfa3a5cbb1e4b909548fc34`
+- 目标 Steam：`steamclient.dll` 为 2024-11-08 构建，Steam 客户端版本 `1730853000`
+- `steamclient.dll` SHA-256：`d0e83c515f17ca57090c8c73664e5d61e37eae718dfa3a5cbb1e4b909548fc34`
 - 系统：Windows 7、Windows 8.1；32 位与 64 位系统均已适配
 - 已验证内容：Terraria（AppID 105600）游戏下载与创意工坊内容下载
+
+不支持当前的 64 位 Steam 客户端、`steamclient64.dll`，以及其他更早、更晚或 Beta 分支的 Steam。详细范围见 [COMPATIBILITY.md](COMPATIBILITY.md)。
 
 它不会替换或修改硬盘上的 `steamclient.dll`、`steamui.dll` 或 `steam.exe`。启动器只在本次 Steam 进程的内存中加入分支；退出 Steam 后该变化自动消失。
 
@@ -23,7 +26,7 @@
 启动器不扫描磁盘、不读取 Steam 账号、密码或游戏文件。它只读取 Steam 在当前用户注册表中保存的安装目录：
 
 ```text
-HKEY_CURRENT_USER\Software\Valve\Steam\SteamPath
+HKEY_CURRENT_USER\\Software\\Valve\\Steam\\SteamPath
 ```
 
 随后使用该路径启动其中的 `steam.exe`。如果此注册表项不存在或路径无效，启动器会显示“找不到 Steam 安装目录”的提示。
