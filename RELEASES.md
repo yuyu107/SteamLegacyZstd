@@ -10,10 +10,16 @@ SHA-256：
 7bbeb9398cb59a68a60ce78bca096cead4059b374a4e6d70b5c1bb6a9613b5b2
 ```
 
-已验证范围：2024-11-08 构建的 32 位 `steamclient.dll` 与 Windows 8.1；Terraria（AppID 105600）下载完成。
+已验证范围：
 
-## Windows 7
+- 2024-11-08 构建的 32 位 `steamclient.dll`
+- Windows 7 和 Windows 8.1，32 位与 64 位系统
+- Terraria（AppID 105600）游戏下载和创意工坊内容下载
 
-启动器本身仅使用 Windows 7 已有的系统接口。但 `steam_zstd.dll` 依赖 Universal CRT；Windows 7 需先具备相应的 UCRT/Visual C++ 运行库，才能加载该 DLL。未安装时启动器会提示 DLL 无法加载。
+## 系统与游戏限制
 
-尚未在干净的 Windows 7 环境完成端到端下载验证，因此当前将其标为“可尝试、未正式验证”，而非承诺兼容。
+启动器与 DLL 均为 32 位构建，因此可在 32 位 Windows 上运行；前提是该系统本身仍能运行目标旧版 Steam。
+
+`steam_zstd.dll` 依赖 Universal CRT。Windows 7 需要具备相应的 UCRT/Visual C++ 运行库，才能加载该 DLL。
+
+本补丁仅恢复新压缩格式内容的下载与解压。部分游戏仍可能因自身仅支持 64 位、要求较新 Windows 版本、依赖新版组件或图形 API 而无法启动。
