@@ -16,7 +16,7 @@ SHA-256：
 
 - 2024-11-08 构建的 32 位 `steamclient.dll`
 - Windows 7 和 Windows 8.1，32 位与 64 位系统
-- Terraria（AppID 105600）游戏下载和创意工坊内容下载
+- Terraria（AppID 105600）游戏下载；Wallpaper Engine 创意工坊内容下载
 
 ## 系统与游戏限制
 
