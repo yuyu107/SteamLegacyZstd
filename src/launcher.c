@@ -9,6 +9,16 @@ static void fail(const char *message) {
     MessageBoxA(0, message, "Old Steam VSZa launcher", MB_OK | MB_ICONERROR);
 }
 
+static void fail_stage(const char *stage, DWORD error) {
+    char message[512];
+    wsprintfA(message,
+              "The temporary memory patch could not be applied.\r\n\r\n"
+              "Stage: %s\r\nWindows error: %lu\r\n\r\n"
+              "No Steam file was changed.",
+              stage, error);
+    fail(message);
+}
+
 static __declspec(noinline) void zero_bytes(void *target, DWORD count) {
     volatile BYTE *p = (volatile BYTE *)target;
     while (count--) *p++ = 0;
@@ -58,7 +68,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
     PROCESS_INFORMATION pi;
     BYTE hook[0x6C0], original[9], jump[9] = {0xE9,0,0,0,0,0x90,0x90,0x90,0x90};
     const BYTE expected[9] = {0x55,0x8B,0xEC,0x81,0xEC,0x8C,0x02,0x00,0x00};
-    DWORD hook_size, old_protect, written, remote_exit = 0;
+    DWORD hook_size, old_protect, written, remote_exit = 0, process_exit = STILL_ACTIVE;
+    DWORD failure_error = 0;
+    const char *failure_stage = "unknown";
     DWORD_PTR client_base, local_kernel, remote_kernel, remote_loadlibrary;
     SIZE_T path_len;
     LPVOID remote_path;
@@ -86,42 +98,108 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
         fail("Steam could not be started. Try running this launcher as administrator."); return 3;
     }
     client_base = 0;
-    for (i = 0; i < 30 && !client_base; ++i) {
+    /* steamclient.dll is delay-loaded by this old Steam build, not imported
+       before the primary thread begins. Wait for that normal load instead of
+       assuming it exists in a newly created suspended process. */
+    for (i = 0; i < 120 && !client_base; ++i) {
         Sleep(500);
+        if (!GetExitCodeProcess(pi.hProcess, &process_exit)) {
+            failure_stage = "query Steam process state";
+            failure_error = GetLastError();
+            goto patch_fail;
+        }
+        if (process_exit != STILL_ACTIVE) {
+            failure_stage = "Steam exited before steamclient.dll loaded";
+            failure_error = process_exit;
+            goto patch_fail;
+        }
         client_base = remote_module(pi.dwProcessId, "steamclient.dll");
+    }
+    if (!client_base) {
+        failure_stage = "wait for steamclient.dll (60 second timeout)";
+        failure_error = WAIT_TIMEOUT;
+        goto patch_fail;
     }
     remote_kernel = remote_module(pi.dwProcessId, "kernel32.dll");
     local_kernel = (DWORD_PTR)GetModuleHandleA("kernel32.dll");
-    if (!client_base || !remote_kernel ||
-        !ReadProcessMemory(pi.hProcess, (LPCVOID)(client_base + STEAMCLIENT_ENTRY_RVA),
-                           original, sizeof(original), 0)) goto patch_fail;
+    if (!remote_kernel || !local_kernel) {
+        failure_stage = "locate kernel32.dll";
+        failure_error = GetLastError();
+        goto patch_fail;
+    }
+    if (!ReadProcessMemory(pi.hProcess, (LPCVOID)(client_base + STEAMCLIENT_ENTRY_RVA),
+                           original, sizeof(original), 0)) {
+        failure_stage = "read steamclient.dll memory";
+        failure_error = GetLastError();
+        goto patch_fail;
+    }
     for (i = 0; i < 9; ++i) if (original[i] != expected[i]) goto version_fail;
 
     remote_loadlibrary = remote_kernel + ((DWORD_PTR)GetProcAddress((HMODULE)local_kernel,
                          "LoadLibraryA") - local_kernel);
     path_len = (SIZE_T)lstrlenA(helper) + 1;
     remote_path = VirtualAllocEx(pi.hProcess, 0, path_len, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-    if (!remote_path || !WriteProcessMemory(pi.hProcess, remote_path, helper, path_len, 0)) goto patch_fail;
+    if (!remote_path) {
+        failure_stage = "allocate helper path in Steam";
+        failure_error = GetLastError();
+        goto patch_fail;
+    }
+    if (!WriteProcessMemory(pi.hProcess, remote_path, helper, path_len, 0)) {
+        failure_stage = "write helper path into Steam";
+        failure_error = GetLastError();
+        goto patch_fail;
+    }
     thread = CreateRemoteThread(pi.hProcess, 0, 0, (LPTHREAD_START_ROUTINE)remote_loadlibrary,
                                 remote_path, 0, 0);
-    if (!thread) goto patch_fail;
-    WaitForSingleObject(thread, 15000);
-    GetExitCodeThread(thread, &remote_exit);
+    if (!thread) {
+        failure_stage = "start helper loader in Steam";
+        failure_error = GetLastError();
+        goto patch_fail;
+    }
+    written = WaitForSingleObject(thread, 15000);
+    if (written != WAIT_OBJECT_0) {
+        failure_stage = "wait for helper loader";
+        failure_error = written;
+        CloseHandle(thread);
+        goto patch_fail;
+    }
+    if (!GetExitCodeThread(thread, &remote_exit)) {
+        failure_stage = "read helper loader result";
+        failure_error = GetLastError();
+        CloseHandle(thread);
+        goto patch_fail;
+    }
     CloseHandle(thread);
     VirtualFreeEx(pi.hProcess, remote_path, 0, MEM_RELEASE);
     if (!remote_exit) goto helper_fail;
 
     if (!VirtualProtectEx(pi.hProcess, (LPVOID)(client_base + STEAMCLIENT_CAVE_RVA),
-                          hook_size, PAGE_EXECUTE_READWRITE, &old_protect)) goto patch_fail;
+                          hook_size, PAGE_EXECUTE_READWRITE, &old_protect)) {
+        failure_stage = "change hook memory protection";
+        failure_error = GetLastError();
+        goto patch_fail;
+    }
     if (!WriteProcessMemory(pi.hProcess, (LPVOID)(client_base + STEAMCLIENT_CAVE_RVA),
-                            hook, hook_size, &written) || written != hook_size) goto patch_fail;
+                            hook, hook_size, &written) || written != hook_size) {
+        failure_stage = "write compatibility hook";
+        failure_error = GetLastError();
+        goto patch_fail;
+    }
     VirtualProtectEx(pi.hProcess, (LPVOID)(client_base + STEAMCLIENT_CAVE_RVA),
                      hook_size, old_protect, &written);
     *(LONG *)(jump + 1) = (LONG)(STEAMCLIENT_CAVE_RVA - (STEAMCLIENT_ENTRY_RVA + 5));
     if (!VirtualProtectEx(pi.hProcess, (LPVOID)(client_base + STEAMCLIENT_ENTRY_RVA),
-                          sizeof(jump), PAGE_EXECUTE_READWRITE, &old_protect)) goto patch_fail;
+                          sizeof(jump), PAGE_EXECUTE_READWRITE, &old_protect)) {
+        failure_stage = "change entry memory protection";
+        failure_error = GetLastError();
+        goto patch_fail;
+    }
     if (!WriteProcessMemory(pi.hProcess, (LPVOID)(client_base + STEAMCLIENT_ENTRY_RVA),
-                            jump, sizeof(jump), &written) || written != sizeof(jump)) goto patch_fail;
+                            jump, sizeof(jump), &written) || written != sizeof(jump)) {
+        failure_stage = "activate compatibility hook";
+        failure_error = GetLastError();
+        goto patch_fail;
+    }
     VirtualProtectEx(pi.hProcess, (LPVOID)(client_base + STEAMCLIENT_ENTRY_RVA),
                      sizeof(jump), old_protect, &written);
     FlushInstructionCache(pi.hProcess, 0, 0);
@@ -138,7 +216,7 @@ helper_fail:
     goto cleanup;
 patch_fail:
     TerminateProcess(pi.hProcess, 1);
-    fail("The temporary memory patch could not be applied. No Steam file was changed.");
+    fail_stage(failure_stage, failure_error);
 cleanup:
     CloseHandle(pi.hThread); CloseHandle(pi.hProcess);
     return 4;
