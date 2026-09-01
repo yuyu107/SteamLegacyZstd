@@ -26,6 +26,6 @@
 
 ## 功能范围
 
-已验证：Terraria（AppID 105600）游戏下载与创意工坊内容下载。
+已验证：Terraria（AppID 105600）游戏下载；Wallpaper Engine 创意工坊内容下载。
 
 本项目只修复 SteamPipe 新 VSZa/Zstandard 压缩块的下载与解压。它不解决游戏本体的系统要求、64 位要求、图形 API、Web 组件或其他运行库问题。
