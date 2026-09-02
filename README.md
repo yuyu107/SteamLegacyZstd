@@ -8,7 +8,7 @@
 
 - 目标 Steam：`steamclient.dll` 为 2024-11-08 构建，Steam 客户端版本 `1730853000`
 - `steamclient.dll` SHA-256：`d0e83c515f17ca57090c8c73664e5d61e37eae718dfa3a5cbb1e4b909548fc34`
-- 系统：Windows 7、Windows 8.1；32 位与 64 位系统均已适配
+- 系统：Windows 7、Windows 8.1；32 位与 64 位系统均已适配（32位未实测）
 - 已验证内容：Terraria（AppID 105600）游戏下载；Wallpaper Engine 创意工坊内容下载
 
 不支持当前的 64 位 Steam 客户端、`steamclient64.dll`，以及其他更早、更晚或 Beta 分支的 Steam。详细范围见 [COMPATIBILITY.md](COMPATIBILITY.md)。
