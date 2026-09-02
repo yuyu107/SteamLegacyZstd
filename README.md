@@ -23,6 +23,14 @@
 
 从 Release 下载并解压全部文件，完全退出 Steam 后运行 `OldSteam_VSZa_Launcher.exe`。不要直接用原 `steam.exe` 启动需要此兼容功能的下载或更新。
 
+启动器会把自身收到的附加命令行参数转交给 Steam。例如，某些特殊定制系统中的 Steam 必须使用 `-no-cef-sandbox` 才能显示界面时，可以运行：
+
+```text
+OldSteam_VSZa_Launcher.exe -no-cef-sandbox
+```
+
+`-no-cef-sandbox` 会关闭 Steam UI 的 CEF 浏览器沙盒，仅应在原 Steam 本来就必须使用该参数的系统上添加；普通 Windows 7 / 8.1 用户不要添加。
+
 ### 特殊 Steam 启动参数
 
 启动器会把自身收到的附加命令行参数转交给 Steam。例如，某些经过修改的 Windows 8.1 Embedded 系统只有在关闭 CEF 沙盒后才能显示旧 Steam UI，可使用：
