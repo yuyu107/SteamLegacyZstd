@@ -5,6 +5,8 @@
 #define STEAMCLIENT_ENTRY_RVA 0x00AF8110u
 #define STEAMCLIENT_CAVE_RVA  0x0005F940u
 
+static char steam_command_line[MAX_PATH + 1024];
+
 static void fail(const char *message) {
     MessageBoxA(0, message, "Old Steam VSZa launcher", MB_OK | MB_ICONERROR);
 }
@@ -62,7 +64,7 @@ static int read_file(const char *path, BYTE *buffer, DWORD capacity, DWORD *size
 
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int show) {
     char steam_dir[MAX_PATH], steam_exe[MAX_PATH], own_dir[MAX_PATH];
-    char helper[MAX_PATH], hook_path[MAX_PATH], cmdline[MAX_PATH + 80];
+    char helper[MAX_PATH], hook_path[MAX_PATH];
     DWORD steam_dir_size = sizeof(steam_dir);
     STARTUPINFOA si;
     PROCESS_INFORMATION pi;
@@ -77,7 +79,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
     HANDLE thread;
     int i;
 
-    (void)instance; (void)previous; (void)command; (void)show;
+    (void)instance; (void)previous; (void)show;
     zero_bytes(&si, sizeof(si)); zero_bytes(&pi, sizeof(pi)); si.cb = sizeof(si);
     if (RegGetValueA(HKEY_CURRENT_USER, "Software\\Valve\\Steam", "SteamPath",
                      RRF_RT_REG_SZ, 0, steam_dir, &steam_dir_size) != ERROR_SUCCESS) {
@@ -87,13 +89,21 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
     wsprintfA(steam_exe, "%s\\steam.exe", steam_dir);
     wsprintfA(helper, "%s\\steam_zstd.dll", own_dir);
     wsprintfA(hook_path, "%s\\vsza_hook.bin", own_dir);
-    wsprintfA(cmdline, "\"%s\" -noverifyfiles -nobootstrapupdate", steam_exe);
+    wsprintfA(steam_command_line, "\"%s\" -noverifyfiles -nobootstrapupdate", steam_exe);
+    if (command && *command) {
+        if ((DWORD)(lstrlenA(steam_command_line) + lstrlenA(command) + 2) >=
+            sizeof(steam_command_line)) {
+            fail("The additional Steam command line is too long."); return 2;
+        }
+        lstrcatA(steam_command_line, " ");
+        lstrcatA(steam_command_line, command);
+    }
     if (GetFileAttributesA(steam_exe) == INVALID_FILE_ATTRIBUTES ||
         GetFileAttributesA(helper) == INVALID_FILE_ATTRIBUTES ||
         !read_file(hook_path, hook, sizeof(hook), &hook_size)) {
         fail("steam.exe or patch files were not found."); return 2;
     }
-    if (!CreateProcessA(steam_exe, cmdline, 0, 0, FALSE, 0, 0,
+    if (!CreateProcessA(steam_exe, steam_command_line, 0, 0, FALSE, 0, 0,
                         steam_dir, &si, &pi)) {
         fail("Steam could not be started. Try running this launcher as administrator."); return 3;
     }
