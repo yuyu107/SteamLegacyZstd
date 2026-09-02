@@ -31,15 +31,15 @@ OldSteam_VSZa_Launcher.exe -no-cef-sandbox
 
 `-no-cef-sandbox` 会关闭 Steam UI 的 CEF 浏览器沙盒，仅应在原 Steam 本来就必须使用该参数的系统上添加；普通 Windows 7 / 8.1 用户不要添加。
 
-### 特殊 Steam 启动参数
+### 特殊 Steam 启动参数（实验功能，仅最新pre-release版本）
 
-启动器会把自身收到的附加命令行参数转交给 Steam。例如，某些经过修改的 Windows 8.1 Embedded 系统只有在关闭 CEF 沙盒后才能显示旧 Steam UI，可使用：
+启动器会把自身收到的附加命令行参数转交给 Steam。例如，Windows 8.1 系统只有在关闭 CEF 沙盒后才能显示Steam 界面，可使用：
 
 ```text
 OldSteam_VSZa_Launcher.exe -no-cef-sandbox
 ```
 
-`-no-cef-sandbox` 会关闭 Steam UI 的 CEF 浏览器沙盒、降低隔离保护。仅当原 Steam 已经必须依赖该参数才能显示界面时使用；普通 Windows 7 / 8.1 用户不要添加。
+`-no-cef-sandbox` 会关闭 Steam UI 的 CEF 浏览器沙盒、降低隔离保护。仅当原 Steam 已经必须依赖该参数才能显示界面时使用；如果没有遇到问题则无需使用这个参数。
 
 ### Steam 安装目录如何识别
 
