@@ -32,6 +32,27 @@ static void dirname_in_place(char *path) {
     if (last) *last = 0;
 }
 
+/*
+ * The launcher is linked without a C runtime and WinMain is used directly as
+ * the PE entry point.  Consequently its apparent WinMain arguments are not
+ * initialized by a CRT startup routine.  Read the real process command line
+ * from Windows and return the unmodified portion after the executable name.
+ */
+static const char *additional_command_line(void) {
+    const char *p = GetCommandLineA();
+    if (!p) return "";
+    while (*p == ' ' || *p == '\t') ++p;
+    if (*p == '"') {
+        ++p;
+        while (*p && *p != '"') ++p;
+        if (*p == '"') ++p;
+    } else {
+        while (*p && *p != ' ' && *p != '\t') ++p;
+    }
+    while (*p == ' ' || *p == '\t') ++p;
+    return p;
+}
+
 static DWORD_PTR remote_module(DWORD pid, const char *wanted) {
     MODULEENTRY32 me;
     HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, pid);
@@ -77,9 +98,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
     SIZE_T path_len;
     LPVOID remote_path;
     HANDLE thread;
+    const char *additional_command;
     int i;
 
-    (void)instance; (void)previous; (void)show;
+    (void)instance; (void)previous; (void)command; (void)show;
+    additional_command = additional_command_line();
     zero_bytes(&si, sizeof(si)); zero_bytes(&pi, sizeof(pi)); si.cb = sizeof(si);
     if (RegGetValueA(HKEY_CURRENT_USER, "Software\\Valve\\Steam", "SteamPath",
                      RRF_RT_REG_SZ, 0, steam_dir, &steam_dir_size) != ERROR_SUCCESS) {
@@ -90,13 +113,13 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
     wsprintfA(helper, "%s\\steam_zstd.dll", own_dir);
     wsprintfA(hook_path, "%s\\vsza_hook.bin", own_dir);
     wsprintfA(steam_command_line, "\"%s\" -noverifyfiles -nobootstrapupdate", steam_exe);
-    if (command && *command) {
-        if ((DWORD)(lstrlenA(steam_command_line) + lstrlenA(command) + 2) >=
+    if (*additional_command) {
+        if ((DWORD)(lstrlenA(steam_command_line) + lstrlenA(additional_command) + 2) >=
             sizeof(steam_command_line)) {
             fail("The additional Steam command line is too long."); return 2;
         }
         lstrcatA(steam_command_line, " ");
-        lstrcatA(steam_command_line, command);
+        lstrcatA(steam_command_line, additional_command);
     }
     if (GetFileAttributesA(steam_exe) == INVALID_FILE_ATTRIBUTES ||
         GetFileAttributesA(helper) == INVALID_FILE_ATTRIBUTES ||
