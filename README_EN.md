@@ -25,7 +25,7 @@ This project only fixes the legacy client's inability to decompress content that
 
 ## Usage
 
-Download the package from [Releases](../../releases), extract every file, and fully exit Steam. Then choose the appropriate launcher:
+Download the package from [Releases](../../releases), extract every file, then run the appropriate launcher as administrator. It attaches if Steam is already running, or starts Steam before patching if it is closed:
 
 - Normal use: run `OldSteam_VSZa_Launcher.exe`
 - Steam shows a black screen, freezes, or loads its UI very slowly: run `Launch_with_gpu_disabled.cmd`
@@ -34,21 +34,33 @@ Download the package from [Releases](../../releases), extract every file, and fu
 
 `-cef-disable-gpu` only disables GPU acceleration for the Steam UI (CEF); it does not disable GPU acceleration in games. `-no-cef-sandbox` disables the CEF sandbox and reduces process isolation, so do not use it on systems that do not require it.
 
-Any other command-line arguments supplied to the launcher are passed through to Steam unchanged.
+Pause downloads before first attaching to a running Steam process, and avoid first injection while a game is running. Resume downloads after success. Repeated runs recognize the same installed patch. Run the launcher again after Steam fully exits or restarts.
+
+Launch arguments only apply when starting Steam. An already-running client is not restarted to change its arguments. Additional arguments are passed through unchanged when Steam is started.
+
+### Automatic UI language
+
+v1.1.0 uses the Windows system default UI language (`GetSystemDefaultUILanguage`): Simplified Chinese for China/Singapore, Traditional Chinese for Taiwan/Hong Kong/Macau, and English for other languages. Success messages, errors and failure stages use Unicode dialogs. Region and keyboard settings do not control this selection.
+
+### Occasional content-unavailable errors near completion
+
+If `logs/content_log.txt` reports `No Download Source` or `No connection to content servers`, keep the downloaded data and retry after a short wait. A user test completed and verified the remaining chunks after refreshing sources. `Failed unpacking chunk` still warrants decompression investigation; not all content-unavailable errors are connection failures.
 
 ## How the Steam installation is located
 
-The launcher does not scan disks or read Steam account credentials or game files. It only reads the Steam installation path stored for the current user in the Windows Registry:
+The launcher enumerates running `steam.exe` processes, queries the actual executable path, and checks the loaded `steamclient.dll` file SHA-256 and memory entry before patching. It does not read account credentials or game content. It refuses to guess when multiple Steam processes are present.
+
+If Steam is closed, it reads the current user's registered installation path:
 
 ```text
-HKEY_CURRENT_USER\\Software\\Valve\\Steam\\SteamPath
+HKEY_CURRENT_USER\Software\Valve\Steam\SteamPath
 ```
 
-It then starts `steam.exe` from that directory. If the registry value is missing or points to an invalid location, the launcher displays an error instead.
+It then starts `steam.exe` there. If the initial process exits during startup, the launcher looks for a replacement from the same installation within its 60-second wait period. If registration is missing or invalid, open Steam normally and run the launcher again.
 
 ## How it works and antivirus notice
 
-The launcher waits for the targeted `steamclient.dll` to load, then redirects its compression dispatcher to a compatibility branch in process memory. That branch handles only the `VSZa` wrapper; all older formats continue through Steam's original code. `steam_zstd.dll` decompresses the Zstandard frame and validates the wrapped CRC32 and output length.
+The launcher waits for the targeted `steamclient.dll` to load, then redirects its compression dispatcher to a compatibility branch in process memory. Target threads are briefly paused and resumed while the entry is written. An injection failure does not intentionally terminate Steam. That branch handles only the `VSZa` wrapper; all older formats continue through Steam's original code. `steam_zstd.dll` decompresses the Zstandard frame and validates the wrapped CRC32 and output length.
 
 No on-disk `steamclient.dll`, `steamui.dll`, or `steam.exe` file is replaced or modified. The patch disappears when Steam exits. Because the launcher performs cross-process memory operations, some security products may flag it heuristically. Download it only from this project's official Releases page and verify the published SHA-256 checksum.
 

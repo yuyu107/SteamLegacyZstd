@@ -20,7 +20,7 @@
 
 ## 系统范围
 
-已实测：Windows 7 和 Windows 8.1，32 位与 64 位系统。
+已实测：Windows 7 和 Windows 8.1 的 64 位系统。32 位 Windows 可使用目标 32 位客户端及补丁，但尚未实机验证。
 
 `steam_zstd.dll` 依赖 Universal CRT；Windows 7 需要具备相应的 UCRT/Visual C++ 运行库。
 
@@ -29,3 +29,9 @@
 已验证：Terraria（AppID 105600）游戏下载；Wallpaper Engine 创意工坊内容下载。
 
 本项目只修复 SteamPipe 新 VSZa/Zstandard 压缩块的下载与解压。它不解决游戏本体的系统要求、64 位要求、图形 API、Web 组件或其他运行库问题。
+
+## v1.1.0 启动与语言
+
+同一入口支持自动启动和运行中注入。运行中注入已有本会话用户完成 Terraria 下载并通过校验。自动启动交接与各语言/系统组合尚未全面验证，不扩大 Steam DLL 支持范围。
+
+简体/繁体中文提示按系统默认 UI 语言选择，其它语言使用英文。

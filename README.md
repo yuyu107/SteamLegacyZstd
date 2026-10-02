@@ -25,7 +25,7 @@
 
 ## 使用方法
 
-从 [Releases](../../releases) 下载并完整解压全部文件，完全退出 Steam 后选择合适的入口：
+从 [Releases](../../releases) 下载并完整解压全部文件，右键以管理员身份运行合适的入口。Steam 已打开时会直接注入；未打开时会自动启动后注入：
 
 - 普通用户：运行 `OldSteam_VSZa_Launcher.exe`
 - Steam 黑屏、界面卡住或加载缓慢：运行 `Launch_with_gpu_disabled.cmd`
@@ -34,21 +34,33 @@
 
 `-cef-disable-gpu` 只禁用 Steam UI（CEF）的 GPU 加速，不影响游戏使用显卡。`-no-cef-sandbox` 会关闭 Steam UI 的 CEF 浏览器沙盒、降低隔离保护，普通系统不要使用。
 
-启动器会把自身收到的其他附加命令行参数原样转交给 Steam。
+首次对已运行的 Steam 注入前，请暂停下载，避免在游戏运行时首次注入。成功后可恢复下载。重复运行会提示当前进程已应用相同补丁；Steam 完全退出或重启后需要再次运行启动器。
+
+启动参数只在自动启动 Steam 时生效；已打开的 Steam 不会被重启以修改参数。自动启动时，启动器会把自身收到的其他附加命令行参数原样转交给 Steam。
+
+### 自动界面语言
+
+v1.1.0 根据 Windows 系统默认 UI 语言（`GetSystemDefaultUILanguage`）显示提示：简体中文（中国大陆、新加坡）、繁体中文（台湾、香港、澳门）；其它语言保持英文。成功、错误和失败阶段均使用 Unicode 弹窗。地区和键盘设置不会影响此判断。
+
+### 下载末尾偶发“内容不可用”
+
+如果 `logs/content_log.txt` 显示 `No Download Source` 或 `No connection to content servers`，保留下载进度，稍等后重试；本次用户测试曾重新获取下载源后补齐剩余分块并通过校验。若出现 `Failed unpacking chunk`，则仍需排查解压，不要把所有“内容不可用”都视为连接问题。
 
 ## Steam 安装目录如何识别
 
-启动器不扫描磁盘，也不读取 Steam 账号、密码或游戏文件。它只读取 Steam 在当前用户注册表中保存的安装目录：
+启动器先枚举正在运行的 `steam.exe`，查询其实际路径，并验证已加载 `steamclient.dll` 对应文件的 SHA-256 和内存入口。不会读取 Steam 账号、密码或游戏内容。发现多个 `steam.exe` 时不会猜测目标。
+
+Steam 未运行时，读取当前用户注册表中的安装目录：
 
 ```text
-HKEY_CURRENT_USER\\Software\\Valve\\Steam\\SteamPath
+HKEY_CURRENT_USER\Software\Valve\Steam\SteamPath
 ```
 
-随后使用该路径启动其中的 `steam.exe`。如果此注册表项不存在或路径无效，启动器会显示找不到 Steam 安装目录的提示。
+随后启动该目录中的 `steam.exe`。启动阶段若初始进程退出，会在 60 秒等待期限内查找同一安装位置的接替进程。若注册表路径缺失或无效，可以先正常打开 Steam，再运行本启动器。
 
 ## 工作方式与安全软件提示
 
-启动器等待旧 Steam 加载目标 `steamclient.dll`，在内存中将其压缩分发函数跳转到兼容分支。该分支仅识别 `VSZa` 包装；其余旧格式仍交还给原始 Steam 代码。`steam_zstd.dll` 使用 Zstandard 解压数据，并检查 Steam 包装中的 CRC32 与输出长度。
+启动器等待旧 Steam 加载目标 `steamclient.dll`，在内存中将其压缩分发函数跳转到兼容分支。写入入口时会短暂暂停并恢复目标线程。注入失败不会主动终止 Steam。该分支仅识别 `VSZa` 包装；其余旧格式仍交还给原始 Steam 代码。`steam_zstd.dll` 使用 Zstandard 解压数据，并检查 Steam 包装中的 CRC32 与输出长度。
 
 它不会替换或修改硬盘上的 `steamclient.dll`、`steamui.dll` 或 `steam.exe`；退出 Steam 后内存变化自动消失。由于程序需要使用跨进程内存操作，部分安全软件可能启发式报毒。请只从本项目官方 Release 下载并核对发布页提供的 SHA-256。
 
