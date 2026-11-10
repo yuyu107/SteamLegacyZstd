@@ -5,7 +5,7 @@
 为 Windows 7 / 8.1 上的指定旧版 Steam 客户端添加 SteamPipe `VSZa`（Zstandard）数据块解压支持。该目标版本是 Steam 结束对 Windows 7 / 8.x 支持前，按常规更新渠道通常会保留或安装到的最后一代兼容客户端，并非任意选择的历史版本。
 
 > [!IMPORTANT]
-> 截至 v1.0.2 发布时，Windows 7 / 8.x 用户仍可直接从 Steam 官网下载安装程序，并正常安装、更新到本补丁所支持的客户端版本 `1730853000`，无需另外寻找来历不明的旧版 Steam 安装包。
+> Windows 7 / 8.x 用户可以从 Steam 官网获取安装程序，无需寻找来历不明的旧版客户端。但**不能保证首次安装就会正确选择旧版分支**：2026-11-11 的 Windows 8.1 32 位实测曾先下载到不兼容的 `steam_client_win32`（`1769731672`），出现“您当前的操作系统版本不再支持 Steam”。如遇此问题，参见下方的 32 位系统故障排除。
 
 目标 Steam 程序本体为 32 位，但可在 32 位和 64 位 Windows 7 / 8.1 上使用。
 
@@ -14,7 +14,7 @@
 - Steam 客户端版本：`1730853000`
 - `steamclient.dll`：2024-11-08 构建
 - `steamclient.dll` SHA-256：`d0e83c515f17ca57090c8c73664e5d61e37eae718dfa3a5cbb1e4b909548fc34`
-- 系统：Windows 7、Windows 8.1（32 位与 64 位系统均支持；32 位系统尚未实机验证）
+- 系统：Windows 7、Windows 8.1（目标为 32 位 Steam 客户端，适用于 32/64 位 Windows；本次已在 Windows 8.1 32 位实测客户端回退启动、登录和开始下载 Terraria，**不等于此次验证了 Zstd 注入**）
 - 已验证内容：Terraria（AppID 105600）游戏下载；Wallpaper Engine 创意工坊内容下载
 
 不支持当前新版 64 位 Steam 客户端、`steamclient64.dll`，以及其他更早、更晚或 Beta 分支的 Steam。详细范围见 [COMPATIBILITY.md](COMPATIBILITY.md)。
@@ -22,6 +22,22 @@
 ## 重要限制
 
 本项目只解决旧 Steam 无法解压新压缩格式内容的问题，**不会让旧系统或旧版 Steam 获得运行所有游戏的能力**。部分游戏仍可能因为仅提供 64 位程序、要求 Windows 10/11、依赖新版 Web 组件、图形 API 或其他运行库而无法启动；这些限制与本补丁无关。
+
+## 32 位 Windows 安装 / 更新后提示系统不支持
+
+**已观察到的情况（Windows 8.1 32 位，2026-11-11）：** 从较旧的 Steam 安装程序启动后，更新器先请求 `steam_client_win32`（版本 `1769731672`），安装完成却提示“您当前的操作系统版本不再支持 Steam”，客户端无法打开。这是**客户端安装 / 更新问题，不是 Zstd 解压失败**。
+
+该环境下曾通过以下方法恢复到本补丁支持的旧版 Steam（不是所有 Windows 版本都保证有效）：
+
+1. **彻底退出 Steam**，包括托盘图标和残留的 `steam.exe` 进程。建议先备份 Steam 安装目录中的重要数据；**不要删除 `steamapps` 或游戏文件**。
+2. 仅在 **Steam 安装目录根目录**找到 `tier0_s.dll` 与 `tier0_s64.dll`，将它们移到 Steam 目录**之外**备份（或在已有备份后删除）；不要操作同名的游戏目录文件。
+3. 编辑 Steam 快捷方式，在 `steam.exe` 路径后添加 `-no-cef-sandbox`，然后使用该快捷方式启动 Steam。例如：`"C:\Program Files\Steam\steam.exe" -no-cef-sandbox`。
+4. 在此次实测中，启动器检测到两个 DLL 缺失后重新验证、下载，改为请求 `steam_client_legacy_win32`（版本 `1730853000`），随后旧版 Steam 成功打开。
+5. 在 Steam 的“帮助 → 关于 Steam”核对客户端版本为 `1730853000`。**确认目标 `steamclient.dll` 的 SHA-256 与本项目要求一致后**，才能使用本项目的 Zstd 补丁；版本不符时不要强行注入。
+
+`-no-cef-sandbox` 会关闭 CEF 沙盒、降低隔离保护，只应在确有需要时使用。它**不是**选择旧版更新分支的专用参数；此次日志只能证明“文件缺失触发修复后选中了 legacy 分支”，不能据此认定单独删除某一个 DLL 或单独添加参数必然有效。
+
+若仍然报错，请保留 `Steam/logs/bootstrap_log.txt`、错误截图和“关于 Steam”的版本信息反馈；不要反复删除文件或使用未知来源的历史安装包。
 
 ## 使用方法
 
