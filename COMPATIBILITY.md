@@ -22,7 +22,7 @@
 
 已实测：Windows 7 和 Windows 8.1 的 64 位系统。目标 Steam 客户端也可运行于 32 位 Windows。2026-11-11 在 **Windows 8.1 32 位**实测通过恢复 `steam_client_legacy_win32`（`1730853000`）成功启动、登录并开始下载 Terraria；**随后 Zstd 补丁也已在该 Windows 8.1 32 位系统上实测可用**；Windows 7 32 位的本次恢复流程尚未实测。
 
-注意：Windows 8.1 32 位已实测；Windows 7 32 位可能出现类似问题但尚未验证。从较旧的 Steam 安装程序安装时可能先收到 `steam_client_win32`（`1769731672`），继而提示“您当前的操作系统版本不再支持 Steam”。一次成功的恢复方式是：退出 Steam，备份并移走 **Steam 根目录**的 `tier0_s.dll` 和 `tier0_s64.dll`，为 Steam 快捷方式添加 `-no-cef-sandbox`，再启动触发完整性修复；实测随后下载了 `steam_client_legacy_win32`（`1730853000`）。这并非所有系统必然适用的解决办法；操作前请备份，不要删除游戏文件。详情见 [README 的 32 位系统故障排除](README.md#32-位-windows-安装--更新后提示系统不支持)。
+32 位 Windows 8.1 可能在首次安装 / 更新 Steam 后遇到“操作系统不再支持 Steam”提示；Windows 7 32 位是否出现相同问题仍待验证。恢复步骤及验证记录请见 [32 位 Windows Steam 安装 / 更新故障排除](docs/STEAM_32BIT_RECOVERY.md)。
 
 `steam_zstd.dll` 依赖 Universal CRT；Windows 7 需要具备相应的 UCRT/Visual C++ 运行库。
 
