@@ -14,7 +14,7 @@ The targeted Steam client is a 32-bit application, which is normal. It can run o
 - Steam client version: `1730853000`
 - `steamclient.dll` build date: 2024-11-08
 - `steamclient.dll` SHA-256: `d0e83c515f17ca57090c8c73664e5d61e37eae718dfa3a5cbb1e4b909548fc34`
-- Operating systems: Windows 7 and Windows 8.1 (the target 32-bit Steam client is intended for x86/x64 Windows; recovery, sign-in, and the start of a Terraria download were observed on Windows 8.1 x86; **this did not independently validate Zstd injection on x86**)
+- Operating systems: Windows 7 and Windows 8.1 (the target 32-bit Steam client is intended for x86/x64 Windows; recovery, sign-in, and the start of a Terraria download were observed on Windows 8.1 x86; **the Zstd patch was subsequently tested successfully on Windows 8.1 x86**)
 - Verified downloads: Terraria (AppID 105600) game content and Wallpaper Engine Workshop content
 
 The current 64-bit Steam client, `steamclient64.dll`, Beta clients, and any earlier or later Steam builds are not supported. See [COMPATIBILITY.md](COMPATIBILITY.md) for the exact compatibility scope.
@@ -25,9 +25,9 @@ This project only fixes the legacy client's inability to decompress content that
 
 ## Unsupported-OS error after installing/updating on 32-bit Windows
 
-**Observed on Windows 8.1 x86 (2026-11-11):** An older Steam installer/updater first fetched `steam_client_win32` (version `1769731672`), then showed “Your current operating system version is no longer supported by Steam.” Steam would not open. This is an **installation/update-channel issue, not a Zstd decompression failure**.
+**Observed on Windows 8.1 x86 (2026-11-11; Windows 7 x86 may be affected too, but remains untested):** An older Steam installer/updater first fetched `steam_client_win32` (version `1769731672`), then showed “Your current operating system version is no longer supported by Steam.” Steam would not open. This is an **installation/update-channel issue, not a Zstd decompression failure**.
 
-The following recovery worked in that one test; it is **not guaranteed** for every Windows build:
+The recovery and subsequent Zstd patch test worked on Windows 8.1 x86. Windows 7 x86 users may try the procedure for the same error, but this recovery has not yet been validated there; it is **not guaranteed** for every Windows build:
 
 1. Fully exit Steam, including tray/background `steam.exe` processes. Back up important Steam installation data. **Do not remove `steamapps` or game files.**
 2. In the **Steam installation root only**, move `tier0_s.dll` and `tier0_s64.dll` **outside the Steam directory** as backups (or remove them after backing them up). Do not touch similarly named files inside games.
