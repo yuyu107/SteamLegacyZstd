@@ -14,7 +14,7 @@
 - Steam 客户端版本：`1730853000`
 - `steamclient.dll`：2024-11-08 构建
 - `steamclient.dll` SHA-256：`d0e83c515f17ca57090c8c73664e5d61e37eae718dfa3a5cbb1e4b909548fc34`
-- 系统：Windows 7、Windows 8.1（目标为 32 位 Steam 客户端，适用于 32/64 位 Windows；本次已在 Windows 8.1 32 位实测客户端回退启动、登录和开始下载 Terraria，**不等于此次验证了 Zstd 注入**）
+- 系统：Windows 7、Windows 8.1（目标为 32 位 Steam 客户端，适用于 32/64 位 Windows；**Windows 8.1 32 位已实测成功启动旧版 Steam，并确认 Zstd 补丁可用**；Windows 7 32 位的本次安装回退流程尚未实测）
 - 已验证内容：Terraria（AppID 105600）游戏下载；Wallpaper Engine 创意工坊内容下载
 
 不支持当前新版 64 位 Steam 客户端、`steamclient64.dll`，以及其他更早、更晚或 Beta 分支的 Steam。详细范围见 [COMPATIBILITY.md](COMPATIBILITY.md)。
@@ -25,9 +25,9 @@
 
 ## 32 位 Windows 安装 / 更新后提示系统不支持
 
-**已观察到的情况（Windows 8.1 32 位，2026-11-11）：** 从较旧的 Steam 安装程序启动后，更新器先请求 `steam_client_win32`（版本 `1769731672`），安装完成却提示“您当前的操作系统版本不再支持 Steam”，客户端无法打开。这是**客户端安装 / 更新问题，不是 Zstd 解压失败**。
+**已观察到的情况（Windows 8.1 32 位，2026-11-11；Windows 7 32 位可能遇到类似情况，但尚未验证）：** 从较旧的 Steam 安装程序启动后，更新器先请求 `steam_client_win32`（版本 `1769731672`），安装完成却提示“您当前的操作系统版本不再支持 Steam”，客户端无法打开。这是**客户端安装 / 更新问题，不是 Zstd 解压失败**。
 
-该环境下曾通过以下方法恢复到本补丁支持的旧版 Steam（不是所有 Windows 版本都保证有效）：
+该环境下曾通过以下方法恢复到本补丁支持的旧版 Steam，恢复后又实测 **Zstd 补丁能够在 Windows 8.1 32 位运行**。Windows 7 32 位若出现相同报错，可参考步骤尝试，但目前没有该系统的成功记录（不是所有 Windows 版本都保证有效）：
 
 1. **彻底退出 Steam**，包括托盘图标和残留的 `steam.exe` 进程。建议先备份 Steam 安装目录中的重要数据；**不要删除 `steamapps` 或游戏文件**。
 2. 仅在 **Steam 安装目录根目录**找到 `tier0_s.dll` 与 `tier0_s64.dll`，将它们移到 Steam 目录**之外**备份（或在已有备份后删除）；不要操作同名的游戏目录文件。
