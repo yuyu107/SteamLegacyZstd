@@ -9,6 +9,13 @@ Adds SteamPipe `VSZa` (Zstandard) chunk decompression support to the last suppor
 
 The targeted Steam client is a 32-bit application, which is normal. It can run on both 32-bit and 64-bit editions of Windows 7/8.1.
 
+| Patch | Download stage | Release |
+| --- | --- | --- |
+| Zstd | SteamPipe `VSZa` chunk decompression | [Stable v1.1.0](https://github.com/yuyu107/SteamLegacyZstd/releases/tag/v1.1.0) |
+| Legacy Workshop UGC | File-details lookup and SHA-1 text compatibility | [UGC v0.1.0-pre.1](https://github.com/yuyu107/SteamLegacyZstd/releases/tag/ugc-v0.1.0-pre.1) |
+
+The patches launch separately and can attach to the same Steam process.
+
 ## Verified scope
 
 - Steam client version: `1730853000`
@@ -21,9 +28,11 @@ The current 64-bit Steam client, `steamclient64.dll`, Beta clients, and any earl
 
 ## Important limitation
 
-This project only fixes the legacy client's inability to decompress content that uses the newer format. It **does not make every game compatible with an old Steam client or an old version of Windows**. A game may still fail to launch because it is 64-bit only, requires Windows 10/11, or depends on newer web components, graphics APIs, or runtimes.
+These patches address the download stages listed above. They **do not make every game compatible with an old Steam client or an old version of Windows**. A game may still fail to launch because it is 64-bit only, requires Windows 10/11, or depends on newer web components, graphics APIs, or runtimes.
 
 ## Usage
+
+### Zstd patch
 
 Download the package from [Releases](../../releases), extract every file, then run the appropriate launcher as administrator. It attaches if Steam is already running, or starts Steam before patching if it is closed:
 
@@ -46,7 +55,15 @@ v1.1.0 uses the Windows system default UI language (`GetSystemDefaultUILanguage`
 
 If `logs/content_log.txt` reports `No Download Source` or `No connection to content servers`, keep the downloaded data and retry after a short wait. A user test completed and verified the remaining chunks after refreshing sources. `Failed unpacking chunk` still warrants decompression investigation; not all content-unavailable errors are connection failures.
 
-## How the Steam installation is located
+### Legacy Workshop UGC patch (pre-release)
+
+1. Open Steam build `1730853000` (November 2024). If Zstd support is needed, run the existing Zstd launcher as usual.
+2. Extract the [UGC pre-release package](https://github.com/yuyu107/SteamLegacyZstd/releases/tag/ugc-v0.1.0-pre.1) and run `Start_UGC_Patch.cmd` separately.
+3. Once attached, subscribe or retry the download in Steam. After Steam exits completely, reload the required patches in the next session.
+
+Tested alongside the Zstd patch on Windows 7 with legacy Oxygen Not Included Workshop items. Other games, the UGC patch on Windows 8.1, and some legacy download paths still need testing. If an item fails, keep Steam open and run `Read_UGC_Status.cmd`. Include the item link, the status report, and relevant lines from `workshop_log.txt` or `cloud_log.txt` in the report.
+
+## How the Zstd launcher locates Steam
 
 The launcher enumerates running `steam.exe` processes, queries the actual executable path, and checks the loaded `steamclient.dll` file SHA-256 and memory entry before patching. It does not read account credentials or game content. It refuses to guess when multiple Steam processes are present.
 
@@ -58,13 +75,13 @@ HKEY_CURRENT_USER\Software\Valve\Steam\SteamPath
 
 It then starts `steam.exe` there. If the initial process exits during startup, the launcher looks for a replacement from the same installation within its 60-second wait period. If registration is missing or invalid, open Steam normally and run the launcher again.
 
-## How it works and antivirus notice
+## How the Zstd patch works and antivirus notice
 
 The launcher waits for the targeted `steamclient.dll` to load, then redirects its compression dispatcher to a compatibility branch in process memory. Target threads are briefly paused and resumed while the entry is written. An injection failure does not intentionally terminate Steam. That branch handles only the `VSZa` wrapper; all older formats continue through Steam's original code. `steam_zstd.dll` decompresses the Zstandard frame and validates the wrapped CRC32 and output length.
 
 No on-disk `steamclient.dll`, `steamui.dll`, or `steam.exe` file is replaced or modified. The patch disappears when Steam exits. Because the launcher performs cross-process memory operations, some security products may flag it heuristically. Download it only from this project's official Releases page and verify the published SHA-256 checksum.
 
-## Building
+## Building the Zstd patch
 
 Building requires Zig 0.16 or a compatible version and GNU binutils (`as`, `ld`, and `objcopy`). Place the Zstandard amalgamated sources (`zstd.c`, `zstd.h`, and `zstd_errors.h`) in `third_party/zstd`; see the files in that directory for source and licensing information.
 
@@ -74,7 +91,7 @@ From the repository root, run:
 build.cmd
 ```
 
-The launcher, `steam_zstd.dll`, and `vsza_hook.bin` are written to `dist`.
+The launcher, `steam_zstd.dll`, and `vsza_hook.bin` are written to `dist`. The UGC pre-release package includes its own source and build script.
 
 ## License and third-party components
 

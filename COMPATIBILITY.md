@@ -20,7 +20,7 @@
 
 ## 系统范围
 
-已实测：Windows 7 和 Windows 8.1 的 64 位系统。目标 Steam 客户端也可运行于 32 位 Windows。2026-11-11 在 **Windows 8.1 32 位**实测通过恢复 `steam_client_legacy_win32`（`1730853000`）成功启动、登录并开始下载 Terraria；**随后 Zstd 补丁也已在该 Windows 8.1 32 位系统上实测可用**；Windows 7 32 位的本次恢复流程尚未实测。
+Zstd 补丁已在 Windows 7 和 Windows 8.1 的 64 位系统上实测。目标 Steam 客户端也可运行于 32 位 Windows。2026-11-11 在 **Windows 8.1 32 位**实测通过恢复 `steam_client_legacy_win32`（`1730853000`）成功启动、登录并开始下载 Terraria；**随后 Zstd 补丁也已在该 Windows 8.1 32 位系统上实测可用**；Windows 7 32 位的本次恢复流程尚未实测。
 
 32 位 Windows 8.1 可能在首次安装 / 更新 Steam 后遇到“操作系统不再支持 Steam”提示；Windows 7 32 位是否出现相同问题仍待验证。恢复步骤及验证记录请见 [32 位 Windows Steam 安装 / 更新故障排除](docs/STEAM_32BIT_RECOVERY.md)。
 
@@ -28,11 +28,18 @@
 
 ## 功能范围
 
-已验证：Terraria（AppID 105600）游戏下载；Wallpaper Engine 创意工坊内容下载。
+| 补丁 | 实测下载 | 适用范围 |
+| --- | --- | --- |
+| Zstd 补丁 v1.1.0 | Terraria（AppID 105600）游戏下载、Wallpaper Engine 创意工坊下载 | SteamPipe `VSZa` 数据块解压 |
+| [旧式创意工坊补丁 v0.1.0-pre.1](https://github.com/yuyu107/SteamLegacyZstd/releases/tag/ugc-v0.1.0-pre.1) | Windows 7 上直接下载《缺氧》（AppID 457140）的旧式 UGC 测试物品 | 旧式文件详情查询与 SHA-1 文本兼容。其他游戏、Windows 8.1 和部分旧式下载入口仍待验证 |
 
-本项目只修复 SteamPipe 新 VSZa/Zstandard 压缩块的下载与解压。它不解决游戏本体的系统要求、64 位要求、图形 API、Web 组件或其他运行库问题。
+两个补丁使用相同的目标客户端，可以分别启动并附加到同一个 Steam 进程。UGC 预发布包的 `Start_UGC_Patch.cmd` 需要 Steam 已经运行。Steam 退出后，两个补丁的内存修改都会清除。
 
-## v1.1.0 启动与语言
+《缺氧》的文件详情响应可以使用上传工具 AppID `636750`。补丁接受这组已验证的对应关系，将 `Cloud.GetFileDetails#1` 响应交给旧下载器，并把十六进制 SHA-1 文本统一为大写。下载器仍会校验文件哈希。
+
+游戏运行仍取决于游戏本身的系统版本、CPU 架构、图形 API、Web 组件和运行库要求。
+
+## Zstd 补丁 v1.1.0 启动与语言
 
 同一入口支持自动启动和运行中注入。运行中注入已有本会话用户完成 Terraria 下载并通过校验。自动启动交接与各语言/系统组合尚未全面验证，不扩大 Steam DLL 支持范围。
 
